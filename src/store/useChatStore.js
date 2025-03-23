@@ -1,7 +1,11 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
+import moment from "moment";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
+import { encryptAESKey, encryptMessage, generateAESKey } from "../utils/encryption";
+import { receiveMessage } from "../utils/decryption";
+const NotificationSound = new Audio("/message-receive.mp3"); // Preload the sound
 
 export const useChatStore = create((set, get) => ({
   messages: [],
@@ -21,44 +25,89 @@ export const useChatStore = create((set, get) => ({
       set({ isUsersLoading: false });
     }
   },
-
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
-      set({ messages: res.data });
+      console.log("res", res.data);
+  
+      const messages = await Promise.all(
+        res.data.map(async (data) => {
+          const { authUser } = useAuthStore.getState();
+          const msg = await receiveMessage(data, authUser._id, localStorage.getItem("pk"));
+          return {
+            ...data,
+            encryptedMessage: msg, // Store decrypted message
+          };
+        })
+      );
+
+      console.log("messages", messages)
+  
+      set({ messages }); // Update state with resolved messages
     } catch (error) {
-      toast.error(error.response.data.message);
+      console.log("error", error)
+      toast.error(error.response?.data?.message || "Failed to fetch messages");
     } finally {
       set({ isMessagesLoading: false });
     }
-  },
-  sendMessage: async (messageData) => {
-    const { selectedUser, messages } = get();
+  },  
+  sendMessage: async (message) => {
+    const { selectedUser } = get();
+    if (!selectedUser) return toast.error("No user selected");
+
+    const { getPublicKey, authUser } = useAuthStore.getState();
     try {
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-      set({ messages: [...messages, res.data] });
+      const receiverId = selectedUser._id;
+      const receiverPublicKey = await getPublicKey(receiverId);
+      const senderPublicKey = authUser.publicKey;
+      console.log({receiverPublicKey})
+      
+      const aesKey = await generateAESKey(); // Ensure async execution
+      const { encrypted } = encryptMessage(message, aesKey);
+      const encryptedAESKeySender = await encryptAESKey(aesKey, senderPublicKey);
+      const encryptedAESKeyReceiver = await encryptAESKey(aesKey, receiverPublicKey);
+
+      await axiosInstance.post(`/messages/send/${receiverId}`, {
+        encryptedMessage: encrypted,
+        encryptedAESKeySender,
+        encryptedAESKeyReceiver,
+      });
+
+      set((state) => ({
+        messages: [...state.messages, {
+          receiverId,
+          senderId: authUser._id,
+          encryptedMessage: message,
+          createdAt: moment.utc().local()
+        }],
+      }));
     } catch (error) {
-      toast.error(error.response.data.message);
+      console.log(error);
+      toast.error(error.response?.data?.message || "Error sending message");
     }
   },
-
   subscribeToMessages: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;
 
-    const socket = useAuthStore.getState().socket;
+    const {socket, authUser} = useAuthStore.getState();
 
-    socket.on("newMessage", (newMessage) => {
+    socket.on("newMessage", async (newMessage) => {
       const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
       if (!isMessageSentFromSelectedUser) return;
 
+      const msg = await receiveMessage(newMessage, authUser._id, localStorage.getItem("pk"));
+
       set({
-        messages: [...get().messages, newMessage],
+        messages: [...get().messages, {...newMessage, encryptedMessage: msg}],
       });
+
+      // 🔔 Play notification sound
+    NotificationSound.currentTime = 0; // Reset sound for quick consecutive notifications
+    NotificationSound.play().catch(error => console.error("Error playing sound:", error));
     });
   },
-
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
