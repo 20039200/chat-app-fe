@@ -32,12 +32,17 @@ export const useAuthStore = create((set, get) => ({
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
-      const { publicKey, privateKey } = await generateKeyPair();
-      localStorage.setItem("pk", privateKey);
+      const hasPrivateKey = localStorage.getItem("pk");
+      let pubKey;
+      if (!hasPrivateKey) {
+        const { publicKey, privateKey } = await generateKeyPair();
+        localStorage.setItem("pk", privateKey);
+        pubKey = publicKey;
+      }
 
       const res = await axiosInstance.post("/auth/signup", {
         ...data,
-        publicKey,
+        publicKey: pubKey,
       });
       set({ authUser: res.data });
       toast.success("Account created successfully");

@@ -23,8 +23,8 @@ const ProfilePage = () => {
 
   return (
     <div className="h-screen pt-20">
-      <div className="max-w-2xl mx-auto p-4 py-8">
-        <div className="bg-base-300 rounded-xl p-6 space-y-8">
+      <div className="max-w-2xl p-4 py-8 mx-auto">
+        <div className="p-6 space-y-8 bg-base-300 rounded-xl">
           <div className="text-center">
             <h1 className="text-2xl font-semibold ">Profile</h1>
             <p className="mt-2">Your profile information</p>
@@ -37,28 +37,8 @@ const ProfilePage = () => {
               <img
                 src={selectedImg || authUser.profilePic || "/avatar.png"}
                 alt="Profile"
-                className="size-32 rounded-full object-cover border-4 "
+                className="object-cover border-4 rounded-full size-32 "
               />
-              <label
-                htmlFor="avatar-upload"
-                className={`
-                  absolute bottom-0 right-0 
-                  bg-base-content hover:scale-105
-                  p-2 rounded-full cursor-pointer 
-                  transition-all duration-200
-                  ${isUpdatingProfile ? "animate-pulse pointer-events-none" : ""}
-                `}
-              >
-                <Camera className="w-5 h-5 text-base-200" />
-                <input
-                  type="file"
-                  id="avatar-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={isUpdatingProfile}
-                />
-              </label>
             </div>
             <p className="text-sm text-zinc-400">
               {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
@@ -67,7 +47,7 @@ const ProfilePage = () => {
 
           <div className="space-y-6">
             <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
                 <User className="w-4 h-4" />
                 Full Name
               </div>
@@ -75,7 +55,7 @@ const ProfilePage = () => {
             </div>
 
             <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
                 <Mail className="w-4 h-4" />
                 Email Address
               </div>
@@ -83,8 +63,8 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="mt-6 bg-base-300 rounded-xl p-6">
-            <h2 className="text-lg font-medium  mb-4">Account Information</h2>
+          <div className="p-6 mt-6 bg-base-300 rounded-xl">
+            <h2 className="mb-4 text-lg font-medium">Account Information</h2>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between py-2 border-b border-zinc-700">
                 <span>Member Since</span>
