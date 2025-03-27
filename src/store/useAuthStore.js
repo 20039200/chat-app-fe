@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 import { generateKeyPair } from "../utils/generateKeyPair.js";
 
 const BASE_URL =
-  import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+  import.meta.env.VITE_MODE === "development" ? "http://localhost:5001" : import.meta.env.VITE_API_URL;
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
