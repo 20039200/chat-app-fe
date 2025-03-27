@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import moment from "moment";
-import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
 import { encryptAESKey, encryptMessage, generateAESKey } from "../utils/encryption";
 import { receiveMessage } from "../utils/decryption";
+import axiosInstance from "../lib/axios";
 const NotificationSound = new Audio("/message-receive.mp3"); // Preload the sound
 
 export const useChatStore = create((set, get) => ({
@@ -61,8 +61,6 @@ export const useChatStore = create((set, get) => ({
       const receiverId = selectedUser._id;
       const receiverPublicKey = await getPublicKey(receiverId);
       const senderPublicKey = authUser.publicKey;
-      alert(senderPublicKey)
-      alert(receiverPublicKey)
       
       const aesKey = await generateAESKey(); // Ensure async execution
       const { encrypted } = encryptMessage(message, aesKey);

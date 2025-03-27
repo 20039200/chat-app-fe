@@ -1,8 +1,8 @@
 import { create } from "zustand";
-import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { generateKeyPair } from "../utils/generateKeyPair.js";
+import axiosInstance from "../lib/axios.js";
 
 const BASE_URL =
   import.meta.env.VITE_MODE === "development" ? "http://localhost:5001" : import.meta.env.VITE_API_URL;
@@ -41,6 +41,7 @@ export const useAuthStore = create((set, get) => ({
       console.log({res})
 
       localStorage.setItem("pk", privateKey);
+      localStorage.setItem("token", res.data.token);
       set({ authUser: res.data });
       toast.success("Account created successfully");
       get().connectSocket();
