@@ -28,12 +28,7 @@ export async function generateKeyPair() {
     "pkcs8",
     keyPair.privateKey
   );
-
-  console.log({
-    publicKey: arrayBufferToBase64(publicKey),
-    privateKey: arrayBufferToBase64(privateKey),
-  });
-
+  
   return {
     publicKey: arrayBufferToBase64(publicKey),
     privateKey: arrayBufferToBase64(privateKey),

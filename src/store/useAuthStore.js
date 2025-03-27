@@ -4,8 +4,7 @@ import { io } from "socket.io-client";
 import { generateKeyPair } from "../utils/generateKeyPair.js";
 import axiosInstance from "../lib/axios.js";
 
-const BASE_URL =
-  import.meta.env.VITE_MODE === "development" ? "http://localhost:5001" : import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -32,21 +31,46 @@ export const useAuthStore = create((set, get) => ({
   googleSignInUp: async (data) => {
     set({ isSigningUp: true });
     try {
-      const { publicKey, privateKey } = await generateKeyPair();
+      const hasPrivateKey = localStorage.getItem("pk");
+      let pubKey;
+      if (!hasPrivateKey) {
+        const { publicKey, privateKey } = await generateKeyPair();
+        localStorage.setItem("pk", privateKey);
+        pubKey = publicKey;
+      }
+
       const res = await axiosInstance.post("/auth/google-sign-in-up", {
         ...data,
-        publicKey: publicKey,
+        publicKey: pubKey,
       });
-
-      console.log({res})
-
-      localStorage.setItem("pk", privateKey);
-      localStorage.setItem("token", res.data.token);
       set({ authUser: res.data });
+      localStorage.setItem("token", res.data.token);
       toast.success("Account created successfully");
       get().connectSocket();
+      // const pvtKey = localStorage.getItem("pk");
+      // const { publicKey, privateKey } = await generateKeyPair();
+
+      // if (pvtKey) {
+      //   const res = await axiosInstance.post("/auth/google-sign-in-up", {
+      //     ...data,
+      //   });
+      //   localStorage.setItem("pk", privateKey);
+      //   localStorage.setItem("token", res.data.token);
+      //   set({ authUser: res.data });
+      // } else {
+      //   const res = await axiosInstance.post("/auth/google-sign-in-up", {
+      //     ...data,
+      //     publicKey: publicKey,
+      //   });
+      //   localStorage.setItem("pk", privateKey);
+      //   localStorage.setItem("token", res.data.token);
+      //   set({ authUser: res.data });
+      // }
+
+      // toast.success("Logged in successfully");
+      // get().connectSocket();
     } catch (error) {
-      console.log({error})
+      console.log({ error });
       toast.error(error.response.data.message);
     } finally {
       set({ isSigningUp: false });
@@ -54,8 +78,8 @@ export const useAuthStore = create((set, get) => ({
   },
   logout: async () => {
     try {
-      await axiosInstance.post("/auth/logout");
       set({ authUser: null });
+      localStorage.removeItem("token");
       toast.success("Logged out successfully");
       get().disconnectSocket();
     } catch (error) {
