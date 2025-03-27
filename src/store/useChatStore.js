@@ -61,7 +61,8 @@ export const useChatStore = create((set, get) => ({
       const receiverId = selectedUser._id;
       const receiverPublicKey = await getPublicKey(receiverId);
       const senderPublicKey = authUser.publicKey;
-      console.log({receiverPublicKey})
+      alert(senderPublicKey)
+      alert(receiverPublicKey)
       
       const aesKey = await generateAESKey(); // Ensure async execution
       const { encrypted } = encryptMessage(message, aesKey);
