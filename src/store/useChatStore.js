@@ -29,7 +29,6 @@ export const useChatStore = create((set, get) => ({
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
-      console.log("res", res.data);
   
       const messages = await Promise.all(
         res.data.map(async (data) => {
@@ -41,8 +40,6 @@ export const useChatStore = create((set, get) => ({
           };
         })
       );
-
-      console.log("messages", messages)
   
       set({ messages }); // Update state with resolved messages
     } catch (error) {
