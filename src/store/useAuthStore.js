@@ -47,28 +47,6 @@ export const useAuthStore = create((set, get) => ({
       localStorage.setItem("token", res.data.token);
       toast.success("Account created successfully");
       get().connectSocket();
-      // const pvtKey = localStorage.getItem("pk");
-      // const { publicKey, privateKey } = await generateKeyPair();
-
-      // if (pvtKey) {
-      //   const res = await axiosInstance.post("/auth/google-sign-in-up", {
-      //     ...data,
-      //   });
-      //   localStorage.setItem("pk", privateKey);
-      //   localStorage.setItem("token", res.data.token);
-      //   set({ authUser: res.data });
-      // } else {
-      //   const res = await axiosInstance.post("/auth/google-sign-in-up", {
-      //     ...data,
-      //     publicKey: publicKey,
-      //   });
-      //   localStorage.setItem("pk", privateKey);
-      //   localStorage.setItem("token", res.data.token);
-      //   set({ authUser: res.data });
-      // }
-
-      // toast.success("Logged in successfully");
-      // get().connectSocket();
     } catch (error) {
       console.log({ error });
       toast.error(error.response.data.message);
