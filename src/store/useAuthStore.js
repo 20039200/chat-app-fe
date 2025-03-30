@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { generateKeyPair } from "../utils/generateKeyPair.js";
 import axiosInstance from "../lib/axios.js";
+import { getPrivateKey, storePrivateKey } from "../utils/indexedDB.js";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -31,11 +32,13 @@ export const useAuthStore = create((set, get) => ({
   googleSignInUp: async (data) => {
     set({ isSigningUp: true });
     try {
-      const hasPrivateKey = localStorage.getItem("pk");
+      let privateKey = await getPrivateKey("user_private_key"); // Retrieve private key from IndexedDB
       let pubKey;
-      if (!hasPrivateKey) {
-        const { publicKey, privateKey } = await generateKeyPair();
-        localStorage.setItem("pk", privateKey);
+
+      if (!privateKey) {
+        const { publicKey, privateKey: newPrivateKey } =
+          await generateKeyPair();
+        await storePrivateKey("user_private_key", newPrivateKey); // Store in IndexedDB
         pubKey = publicKey;
       }
 
@@ -43,13 +46,14 @@ export const useAuthStore = create((set, get) => ({
         ...data,
         publicKey: pubKey,
       });
+
       set({ authUser: res.data });
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", res.data.token); // Still storing token in localStorage
       toast.success("Account created successfully");
       get().connectSocket();
     } catch (error) {
       console.log({ error });
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
       set({ isSigningUp: false });
     }
