@@ -5,6 +5,7 @@ import { useAuthStore } from "./useAuthStore";
 import { encryptAESKey, encryptMessage, generateAESKey } from "../utils/encryption";
 import { receiveMessage } from "../utils/decryption";
 import axiosInstance from "../lib/axios";
+import { getPrivateKey } from "../utils/indexedDB";
 const NotificationSound = new Audio("/message-receive.mp3"); // Preload the sound
 
 export const useChatStore = create((set, get) => ({
@@ -28,12 +29,14 @@ export const useChatStore = create((set, get) => ({
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
     try {
+      const privateKey = await getPrivateKey("user_private_key"); // Retrieve private key from IndexedDB
+      
       const res = await axiosInstance.get(`/messages/${userId}`);
   
       const messages = await Promise.all(
         res.data.map(async (data) => {
           const { authUser } = useAuthStore.getState();
-          const msg = await receiveMessage(data, authUser._id, localStorage.getItem("pk"));
+          const msg = await receiveMessage(data, authUser._id, privateKey);
           return {
             ...data,
             encryptedMessage: msg, // Store decrypted message
@@ -93,7 +96,9 @@ export const useChatStore = create((set, get) => ({
       const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
       if (!isMessageSentFromSelectedUser) return;
 
-      const msg = await receiveMessage(newMessage, authUser._id, localStorage.getItem("pk"));
+      const privateKey = await getPrivateKey("user_private_key");
+
+      const msg = await receiveMessage(newMessage, authUser._id, privateKey);
 
       set({
         messages: [...get().messages, {...newMessage, encryptedMessage: msg}],
